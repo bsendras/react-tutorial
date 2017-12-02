@@ -78,12 +78,14 @@ class Game extends React.Component {
       history: [{
         squares: Array(9).fill(null) 
       }],
+      stepNumber: 0,
       xIsNext: true,
     };
   }
 
   handleClick(i) {
-    const history = this.state.history;
+    // leemos el historial y lo copiamos desde el inicio hasta el ultimo estado en el que estamos.
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     // slice copia un subset del array. sin argumentos copia todo el array .
     const squares = current.squares.slice();
@@ -99,16 +101,42 @@ class Game extends React.Component {
         history: history.concat({
         squares: squares,
       }),
+      stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
+    });
+  }
+
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0,
     });
   }
 
   render() {
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
-    let status;
-    
+
+    const moves = history.map((step, move) => {
+      const desc = move ?
+        'Go to move #' + move :
+        'Go to game start';
+
+        return (
+          /* al renderizar componentes de lista es nescesario añadir un key a cada iten
+           ya que react unsa este identificador unico entre los items (no es necesario que sea globalmente unico)
+           para actualizar selectivanmete cada item, mas aun en los casos en los que se insertan/mueven
+           items en diferentes posiciones que no son el final de la lista. */
+          <li key={ move }>
+            <button onClick={ () => this.jumpTo(move) }>
+              {desc}
+            </button>
+          </li>
+        );
+    });
+
+    let status;    
     if (winner) {
       status = 'Winner is: ' + winner;
     } else {
@@ -125,7 +153,7 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{ status }</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{ moves }</ol>
         </div>
       </div>
     );
